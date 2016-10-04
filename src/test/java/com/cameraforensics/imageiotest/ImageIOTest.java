@@ -30,6 +30,7 @@ public class ImageIOTest {
             for (int x = 0; x < 3; x++) {
                 int[] imageio1RGB = getRGBUsingImageIO1(file, x, y);
                 int[] imageio2RGB = getRGBUsingImageIO2(file, x, y);
+                int[] imageio3RGB = getRGBUsingImageIO3(file, x, y);
                 int[] pythonRGB = getRGBUsingPython(file, x, y);
                 int[] imageMagickRGB = getRGBUsingImageMagick(file, x, y);
 
@@ -39,6 +40,7 @@ public class ImageIOTest {
                 }
                 System.out.printf("Image IO 1  : [%d, %d] = %s %s\n", x, y, Arrays.toString(imageio1RGB), diff);
                 System.out.printf("Image IO 2  : [%d, %d] = %s %s\n", x, y, Arrays.toString(imageio2RGB), diff);
+                System.out.printf("Image IO 3  : [%d, %d] = %s %s\n", x, y, Arrays.toString(imageio3RGB), diff);
                 System.out.printf("Python      : [%d, %d] = %s\n", x, y, Arrays.toString(pythonRGB));
                 System.out.printf("ImageMagick : [%d, %d] = %s\n\n", x, y, Arrays.toString(imageMagickRGB));
             }
@@ -62,6 +64,21 @@ public class ImageIOTest {
     private int[] getRGBUsingImageIO2(File file, int x, int y) throws IOException {
         BufferedImage image = ImageIO.read(file);
         ColorConvertOp cco = new ColorConvertOp( cs, null );
+        BufferedImage result = cco.filter( image, null );
+        int javaRGB = result.getRGB(x, y);
+        int javaRed = (javaRGB >> 16) & 0xFF;
+        int javaGreen = (javaRGB >> 8) & 0xFF;
+        int javaBlue = (javaRGB >> 0) & 0xFF;
+
+        return new int[]{javaRed, javaGreen, javaBlue};
+    }
+
+    private ICC_Profile cp2 = ICC_Profile.getInstance("src/test/resources/sRGB_ICC_v4_Appearance.icc");
+    private ICC_ColorSpace cs2 = new ICC_ColorSpace(cp2);
+
+    private int[] getRGBUsingImageIO3(File file, int x, int y) throws IOException {
+        BufferedImage image = ImageIO.read(file);
+        ColorConvertOp cco = new ColorConvertOp(cs, cs2, null);
         BufferedImage result = cco.filter( image, null );
         int javaRGB = result.getRGB(x, y);
         int javaRed = (javaRGB >> 16) & 0xFF;
